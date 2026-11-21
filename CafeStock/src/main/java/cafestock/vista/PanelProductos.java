@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
  */
 package cafestock.vista;
-
+import javax.swing.JOptionPane;
 /**
  *
  * @author ksang
@@ -15,6 +15,69 @@ public class PanelProductos extends javax.swing.JPanel {
      */
     public PanelProductos() {
         initComponents();
+        txtBuscar.getDocument().addDocumentListener(
+        new javax.swing.event.DocumentListener() {
+
+                @Override
+                public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                    filtrarProductos();
+                }
+
+                @Override
+                public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                    filtrarProductos();
+                }
+
+                @Override
+                public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                    filtrarProductos();
+                }
+            }
+        );
+    }
+    
+    private void filtrarProductos() {
+
+        String texto = txtBuscar.getText().trim();
+
+        javax.swing.table.DefaultTableModel modelo =
+            (javax.swing.table.DefaultTableModel)
+            tblProductos.getModel();
+
+        javax.swing.table.TableRowSorter<
+            javax.swing.table.DefaultTableModel> filtro =
+            new javax.swing.table.TableRowSorter<>(modelo);
+
+        tblProductos.setRowSorter(filtro);
+
+        // Si no hay texto, mostrar todos los productos.
+        if (texto.isEmpty()) {
+            filtro.setRowFilter(null);
+            return;
+        }
+
+        filtro.setRowFilter(
+            new javax.swing.RowFilter<
+                javax.swing.table.DefaultTableModel, Integer>() {
+
+                @Override
+                public boolean include(
+                    Entry<? extends
+                    javax.swing.table.DefaultTableModel,
+                    ? extends Integer> fila) {
+
+                    String codigo =
+                        String.valueOf(fila.getValue(0));
+
+                    String nombre =
+                        String.valueOf(fila.getValue(1));
+
+                    return codigo.equalsIgnoreCase(texto)
+                        || nombre.toLowerCase(java.util.Locale.ROOT)
+                            .contains(texto.toLowerCase(java.util.Locale.ROOT));
+                }
+            }
+        );
     }
 
     /**
@@ -49,7 +112,7 @@ public class PanelProductos extends javax.swing.JPanel {
         pnlInventario = new javax.swing.JPanel();
         lblInventario = new javax.swing.JLabel();
         txtBuscar = new javax.swing.JTextField();
-        btnBuscar = new javax.swing.JButton();
+        btnVerTodos = new javax.swing.JButton();
         lblBuscar = new javax.swing.JLabel();
         scrollProductos = new javax.swing.JScrollPane();
         tblProductos = new javax.swing.JTable();
@@ -229,17 +292,17 @@ public class PanelProductos extends javax.swing.JPanel {
         lblInventario.setForeground(new java.awt.Color(35, 70, 56));
         lblInventario.setText("Inventario de productos");
 
-        txtBuscar.setEditable(false);
         txtBuscar.setBackground(new java.awt.Color(247, 247, 244));
         txtBuscar.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         txtBuscar.setForeground(new java.awt.Color(39, 55, 46));
         txtBuscar.setToolTipText("");
+        txtBuscar.addActionListener(this::txtBuscarActionPerformed);
 
-        btnBuscar.setBackground(new java.awt.Color(45, 98, 73));
-        btnBuscar.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        btnBuscar.setForeground(new java.awt.Color(255, 255, 255));
-        btnBuscar.setText("Buscar");
-        btnBuscar.addActionListener(this::btnBuscarActionPerformed);
+        btnVerTodos.setBackground(new java.awt.Color(45, 98, 73));
+        btnVerTodos.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btnVerTodos.setForeground(new java.awt.Color(255, 255, 255));
+        btnVerTodos.setText("Ver todos");
+        btnVerTodos.addActionListener(this::btnVerTodosActionPerformed);
 
         lblBuscar.setForeground(new java.awt.Color(93, 106, 96));
         lblBuscar.setText("Buscar por código o nombre");
@@ -252,7 +315,15 @@ public class PanelProductos extends javax.swing.JPanel {
             new String [] {
                 "Código", "Nombre", "Precio (USD)", "Stock actual", "Stock mínimo"
             }
-        ));
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
         tblProductos.setAutoscrolls(false);
         tblProductos.setRowHeight(34);
         tblProductos.setSelectionBackground(new java.awt.Color(224, 237, 228));
@@ -270,7 +341,7 @@ public class PanelProductos extends javax.swing.JPanel {
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, pnlInventarioLayout.createSequentialGroup()
                         .addComponent(txtBuscar)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btnBuscar))
+                        .addComponent(btnVerTodos))
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, pnlInventarioLayout.createSequentialGroup()
                         .addGroup(pnlInventarioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(lblInventario, javax.swing.GroupLayout.Alignment.LEADING)
@@ -288,7 +359,7 @@ public class PanelProductos extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlInventarioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtBuscar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnBuscar, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(btnVerTodos, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(scrollProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 317, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(37, Short.MAX_VALUE))
@@ -354,18 +425,168 @@ public class PanelProductos extends javax.swing.JPanel {
     }//GEN-LAST:event_txtStockMinimoActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        // TODO add your handling code here:
+        String codigo = txtCodigo.getText().trim();
+        String nombre = txtNombre.getText().trim();
+        String textoPrecio = txtPrecio.getText().trim().replace(",", ".");
+        String textoStock = txtStockActual.getText().trim();
+        String textoMinimo = txtStockMinimo.getText().trim();
+
+        // 1. VALIDAR CAMPOS OBLIGATORIOS
+        if (codigo.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this, "Debe ingresar el código del producto.",
+                "Campo obligatorio",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            txtCodigo.requestFocus();
+            return;
+        }
+
+        if (nombre.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this, "Debe ingresar el nombre del producto.",
+                "Campo obligatorio",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            txtNombre.requestFocus();
+            return;
+        }
+
+        // 2. VALIDAR CÓDIGOS REPETIDOS
+        // Por ahora se consultan los productos de la tabla.
+        javax.swing.table.DefaultTableModel modelo =
+            (javax.swing.table.DefaultTableModel) tblProductos.getModel();
+
+        for (int i = 0; i < modelo.getRowCount(); i++) {
+
+            String codigoExistente =
+                String.valueOf(modelo.getValueAt(i, 0));
+
+            if (codigoExistente.equalsIgnoreCase(codigo)) {
+                javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    "Ya existe un producto con el código " + codigo,
+                    "Código duplicado",
+                    javax.swing.JOptionPane.WARNING_MESSAGE
+                );
+                txtCodigo.requestFocus();
+                return;
+            }
+        }
+
+        // 3. VALIDAR PRECIO
+        java.math.BigDecimal precio;
+
+        try {
+            precio = new java.math.BigDecimal(textoPrecio);
+        } catch (NumberFormatException e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Ingrese un precio numérico válido.",
+                "Precio incorrecto",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            txtPrecio.requestFocus();
+            return;
+        }
+
+        // 4. VALIDAR STOCK ACTUAL
+        int stockActual;
+
+        try {
+            stockActual = Integer.parseInt(textoStock);
+        } catch (NumberFormatException e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "El stock actual debe ser un número entero.",
+                "Stock incorrecto",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            txtStockActual.requestFocus();
+            return;
+        }
+
+        // 5. VALIDAR STOCK MÍNIMO
+        int stockMinimo;
+
+        try {
+            stockMinimo = Integer.parseInt(textoMinimo);
+        } catch (NumberFormatException e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "El stock mínimo debe ser un número entero.",
+                "Stock incorrecto",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            txtStockMinimo.requestFocus();
+            return;
+        }
+
+        // 6. UTILIZAR LAS VALIDACIONES DEL MODELO PRODUCTO
+        try {
+
+            cafestock.modelo.Producto producto =
+                new cafestock.modelo.Producto(
+                    codigo,
+                    nombre,
+                    precio,
+                    stockActual,
+                    stockMinimo
+                );
+
+            // 7. AGREGAR EL PRODUCTO A LA TABLA TEMPORAL
+            modelo.addRow(new Object[]{
+                producto.getCodigo(),
+                producto.getNombre(),
+                producto.getPrecio(),
+                producto.getStock(),
+                producto.getStockMinimo()
+            });
+
+            // 8. MOSTRAR CONFIRMACIÓN
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Producto registrado correctamente.",
+                "Registro exitoso",
+                javax.swing.JOptionPane.INFORMATION_MESSAGE
+            );
+
+            // 9. LIMPIAR LOS CAMPOS
+            txtCodigo.setText("");
+            txtNombre.setText("");
+            txtPrecio.setText("");
+            txtStockActual.setText("");
+            txtStockMinimo.setText("");
+
+            txtCodigo.requestFocus();
+
+        } catch (IllegalArgumentException e) {
+
+            // Se muestran los errores definidos:
+            // precio <= 0, más de dos decimales o stocks negativos.
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                e.getMessage(),
+                "Datos incorrectos",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+        }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
-    private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarActionPerformed
+    private void btnVerTodosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVerTodosActionPerformed
+       txtBuscar.setText("");
+       txtBuscar.requestFocusInWindow();
+    }//GEN-LAST:event_btnVerTodosActionPerformed
+
+    private void txtBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtBuscarActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_btnBuscarActionPerformed
+    }//GEN-LAST:event_txtBuscarActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnBuscar;
     private javax.swing.JButton btnGuardar;
     private javax.swing.JButton btnLimpiar;
+    private javax.swing.JButton btnVerTodos;
     private javax.swing.JLabel lblBuscar;
     private javax.swing.JLabel lblCodigo;
     private javax.swing.JLabel lblDescripcion;
