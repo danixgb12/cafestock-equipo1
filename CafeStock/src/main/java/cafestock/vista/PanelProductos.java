@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
  */
 package cafestock.vista;
-
+import javax.swing.JOptionPane;
 /**
  *
  * @author ksang
@@ -252,7 +252,15 @@ public class PanelProductos extends javax.swing.JPanel {
             new String [] {
                 "Código", "Nombre", "Precio (USD)", "Stock actual", "Stock mínimo"
             }
-        ));
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
         tblProductos.setAutoscrolls(false);
         tblProductos.setRowHeight(34);
         tblProductos.setSelectionBackground(new java.awt.Color(224, 237, 228));
@@ -354,11 +362,156 @@ public class PanelProductos extends javax.swing.JPanel {
     }//GEN-LAST:event_txtStockMinimoActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        // TODO add your handling code here:
+        String codigo = txtCodigo.getText().trim();
+        String nombre = txtNombre.getText().trim();
+        String textoPrecio = txtPrecio.getText().trim().replace(",", ".");
+        String textoStock = txtStockActual.getText().trim();
+        String textoMinimo = txtStockMinimo.getText().trim();
+
+        // 1. VALIDAR CAMPOS OBLIGATORIOS
+        if (codigo.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this, "Debe ingresar el código del producto.",
+                "Campo obligatorio",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            txtCodigo.requestFocus();
+            return;
+        }
+
+        if (nombre.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this, "Debe ingresar el nombre del producto.",
+                "Campo obligatorio",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            txtNombre.requestFocus();
+            return;
+        }
+
+        // 2. VALIDAR CÓDIGOS REPETIDOS
+        // Por ahora se consultan los productos de la tabla.
+        javax.swing.table.DefaultTableModel modelo =
+            (javax.swing.table.DefaultTableModel) tblProductos.getModel();
+
+        for (int i = 0; i < modelo.getRowCount(); i++) {
+
+            String codigoExistente =
+                String.valueOf(modelo.getValueAt(i, 0));
+
+            if (codigoExistente.equalsIgnoreCase(codigo)) {
+                javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    "Ya existe un producto con el código " + codigo,
+                    "Código duplicado",
+                    javax.swing.JOptionPane.WARNING_MESSAGE
+                );
+                txtCodigo.requestFocus();
+                return;
+            }
+        }
+
+        // 3. VALIDAR PRECIO
+        java.math.BigDecimal precio;
+
+        try {
+            precio = new java.math.BigDecimal(textoPrecio);
+        } catch (NumberFormatException e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Ingrese un precio numérico válido.",
+                "Precio incorrecto",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            txtPrecio.requestFocus();
+            return;
+        }
+
+        // 4. VALIDAR STOCK ACTUAL
+        int stockActual;
+
+        try {
+            stockActual = Integer.parseInt(textoStock);
+        } catch (NumberFormatException e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "El stock actual debe ser un número entero.",
+                "Stock incorrecto",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            txtStockActual.requestFocus();
+            return;
+        }
+
+        // 5. VALIDAR STOCK MÍNIMO
+        int stockMinimo;
+
+        try {
+            stockMinimo = Integer.parseInt(textoMinimo);
+        } catch (NumberFormatException e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "El stock mínimo debe ser un número entero.",
+                "Stock incorrecto",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            txtStockMinimo.requestFocus();
+            return;
+        }
+
+        // 6. UTILIZAR LAS VALIDACIONES DEL MODELO PRODUCTO
+        try {
+
+            cafestock.modelo.Producto producto =
+                new cafestock.modelo.Producto(
+                    codigo,
+                    nombre,
+                    precio,
+                    stockActual,
+                    stockMinimo
+                );
+
+            // 7. AGREGAR EL PRODUCTO A LA TABLA TEMPORAL
+            modelo.addRow(new Object[]{
+                producto.getCodigo(),
+                producto.getNombre(),
+                producto.getPrecio(),
+                producto.getStock(),
+                producto.getStockMinimo()
+            });
+
+            // 8. MOSTRAR CONFIRMACIÓN
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Producto registrado correctamente.",
+                "Registro exitoso",
+                javax.swing.JOptionPane.INFORMATION_MESSAGE
+            );
+
+            // 9. LIMPIAR LOS CAMPOS
+            txtCodigo.setText("");
+            txtNombre.setText("");
+            txtPrecio.setText("");
+            txtStockActual.setText("");
+            txtStockMinimo.setText("");
+
+            txtCodigo.requestFocus();
+
+        } catch (IllegalArgumentException e) {
+
+            // Se muestran los errores definidos:
+            // precio <= 0, más de dos decimales o stocks negativos.
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                e.getMessage(),
+                "Datos incorrectos",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+        }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarActionPerformed
-        // TODO add your handling code here:
+     
     }//GEN-LAST:event_btnBuscarActionPerformed
 
 
