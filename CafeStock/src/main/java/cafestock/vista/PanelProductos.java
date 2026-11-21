@@ -34,6 +34,46 @@ public class PanelProductos extends javax.swing.JPanel {
                 }
             }
         );
+        
+        tblProductos.getSelectionModel().addListSelectionListener(e -> {
+
+        if (e.getValueIsAdjusting()) {
+            return;
+        }
+
+        int fila = tblProductos.getSelectedRow();
+
+        if (fila == -1) {
+            return;
+        }
+
+        // Cargar los datos del producto seleccionado.
+        txtCodigo.setText(
+            String.valueOf(tblProductos.getValueAt(fila, 0))
+        );
+
+        txtNombre.setText(
+            String.valueOf(tblProductos.getValueAt(fila, 1))
+        );
+
+        txtPrecio.setText(
+            String.valueOf(tblProductos.getValueAt(fila, 2))
+        );
+
+        txtStockActual.setText(
+            String.valueOf(tblProductos.getValueAt(fila, 3))
+        );
+
+        txtStockMinimo.setText(
+            String.valueOf(tblProductos.getValueAt(fila, 4))
+        );
+
+        // El código es único y no se puede modificar.
+        txtCodigo.setEditable(false);
+
+        // Evitar registrar por error otro producto.
+        btnGuardar.setEnabled(false);
+    });
     }
     
     private void filtrarProductos() {
@@ -228,6 +268,7 @@ public class PanelProductos extends javax.swing.JPanel {
         btnLimpiar.setBackground(new java.awt.Color(234, 240, 233));
         btnLimpiar.setForeground(new java.awt.Color(35, 70, 56));
         btnLimpiar.setText("\tLimpiar");
+        btnLimpiar.addActionListener(this::btnLimpiarActionPerformed);
 
         javax.swing.GroupLayout pnlFormularioLayout = new javax.swing.GroupLayout(pnlFormulario);
         pnlFormulario.setLayout(pnlFormularioLayout);
@@ -581,6 +622,21 @@ public class PanelProductos extends javax.swing.JPanel {
     private void txtBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtBuscarActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtBuscarActionPerformed
+
+    private void btnLimpiarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLimpiarActionPerformed
+        txtCodigo.setText("");
+        txtNombre.setText("");
+        txtPrecio.setText("");
+        txtStockActual.setText("");
+        txtStockMinimo.setText("");
+
+        tblProductos.clearSelection();
+
+        txtCodigo.setEditable(true);
+        btnGuardar.setEnabled(true);
+
+        txtCodigo.requestFocusInWindow();
+    }//GEN-LAST:event_btnLimpiarActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
