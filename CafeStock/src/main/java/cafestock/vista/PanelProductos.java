@@ -15,6 +15,69 @@ public class PanelProductos extends javax.swing.JPanel {
      */
     public PanelProductos() {
         initComponents();
+        txtBuscar.getDocument().addDocumentListener(
+        new javax.swing.event.DocumentListener() {
+
+                @Override
+                public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                    filtrarProductos();
+                }
+
+                @Override
+                public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                    filtrarProductos();
+                }
+
+                @Override
+                public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                    filtrarProductos();
+                }
+            }
+        );
+    }
+    
+    private void filtrarProductos() {
+
+        String texto = txtBuscar.getText().trim();
+
+        javax.swing.table.DefaultTableModel modelo =
+            (javax.swing.table.DefaultTableModel)
+            tblProductos.getModel();
+
+        javax.swing.table.TableRowSorter<
+            javax.swing.table.DefaultTableModel> filtro =
+            new javax.swing.table.TableRowSorter<>(modelo);
+
+        tblProductos.setRowSorter(filtro);
+
+        // Si no hay texto, mostrar todos los productos.
+        if (texto.isEmpty()) {
+            filtro.setRowFilter(null);
+            return;
+        }
+
+        filtro.setRowFilter(
+            new javax.swing.RowFilter<
+                javax.swing.table.DefaultTableModel, Integer>() {
+
+                @Override
+                public boolean include(
+                    Entry<? extends
+                    javax.swing.table.DefaultTableModel,
+                    ? extends Integer> fila) {
+
+                    String codigo =
+                        String.valueOf(fila.getValue(0));
+
+                    String nombre =
+                        String.valueOf(fila.getValue(1));
+
+                    return codigo.equalsIgnoreCase(texto)
+                        || nombre.toLowerCase(java.util.Locale.ROOT)
+                            .contains(texto.toLowerCase(java.util.Locale.ROOT));
+                }
+            }
+        );
     }
 
     /**
@@ -49,7 +112,7 @@ public class PanelProductos extends javax.swing.JPanel {
         pnlInventario = new javax.swing.JPanel();
         lblInventario = new javax.swing.JLabel();
         txtBuscar = new javax.swing.JTextField();
-        btnBuscar = new javax.swing.JButton();
+        btnVerTodos = new javax.swing.JButton();
         lblBuscar = new javax.swing.JLabel();
         scrollProductos = new javax.swing.JScrollPane();
         tblProductos = new javax.swing.JTable();
@@ -229,17 +292,17 @@ public class PanelProductos extends javax.swing.JPanel {
         lblInventario.setForeground(new java.awt.Color(35, 70, 56));
         lblInventario.setText("Inventario de productos");
 
-        txtBuscar.setEditable(false);
         txtBuscar.setBackground(new java.awt.Color(247, 247, 244));
         txtBuscar.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         txtBuscar.setForeground(new java.awt.Color(39, 55, 46));
         txtBuscar.setToolTipText("");
+        txtBuscar.addActionListener(this::txtBuscarActionPerformed);
 
-        btnBuscar.setBackground(new java.awt.Color(45, 98, 73));
-        btnBuscar.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        btnBuscar.setForeground(new java.awt.Color(255, 255, 255));
-        btnBuscar.setText("Buscar");
-        btnBuscar.addActionListener(this::btnBuscarActionPerformed);
+        btnVerTodos.setBackground(new java.awt.Color(45, 98, 73));
+        btnVerTodos.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btnVerTodos.setForeground(new java.awt.Color(255, 255, 255));
+        btnVerTodos.setText("Ver todos");
+        btnVerTodos.addActionListener(this::btnVerTodosActionPerformed);
 
         lblBuscar.setForeground(new java.awt.Color(93, 106, 96));
         lblBuscar.setText("Buscar por código o nombre");
@@ -278,7 +341,7 @@ public class PanelProductos extends javax.swing.JPanel {
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, pnlInventarioLayout.createSequentialGroup()
                         .addComponent(txtBuscar)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btnBuscar))
+                        .addComponent(btnVerTodos))
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, pnlInventarioLayout.createSequentialGroup()
                         .addGroup(pnlInventarioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(lblInventario, javax.swing.GroupLayout.Alignment.LEADING)
@@ -296,7 +359,7 @@ public class PanelProductos extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlInventarioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtBuscar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnBuscar, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(btnVerTodos, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(scrollProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 317, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(37, Short.MAX_VALUE))
@@ -510,15 +573,20 @@ public class PanelProductos extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
-    private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarActionPerformed
-     
-    }//GEN-LAST:event_btnBuscarActionPerformed
+    private void btnVerTodosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVerTodosActionPerformed
+       txtBuscar.setText("");
+       txtBuscar.requestFocusInWindow();
+    }//GEN-LAST:event_btnVerTodosActionPerformed
+
+    private void txtBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtBuscarActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtBuscarActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnBuscar;
     private javax.swing.JButton btnGuardar;
     private javax.swing.JButton btnLimpiar;
+    private javax.swing.JButton btnVerTodos;
     private javax.swing.JLabel lblBuscar;
     private javax.swing.JLabel lblCodigo;
     private javax.swing.JLabel lblDescripcion;
