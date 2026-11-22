@@ -18,7 +18,8 @@ import java.io.IOException;
 public class PanelProductos extends javax.swing.JPanel {
 
     private ProductoControlador controlador;
-
+    private String codigoEnEdicion = null;
+    
     /** Recupera los productos existentes al construir la pantalla. */
     private void iniciarInventario() {
         try {
@@ -103,11 +104,12 @@ public class PanelProductos extends javax.swing.JPanel {
             String.valueOf(tblProductos.getValueAt(fila, 4))
         );
 
-        // El código es único y no se puede modificar.
-        txtCodigo.setEditable(false);
+        codigoEnEdicion = txtCodigo.getText().trim();
 
-        // Evitar registrar por error otro producto.
-        btnGuardar.setEnabled(false);
+        txtCodigo.setEditable(false);
+        lblNuevoProducto.setText("Editar producto");
+        btnGuardar.setText("Guardar cambios");
+        btnGuardar.setEnabled(controlador != null);
     });
     }
     
@@ -501,158 +503,136 @@ public class PanelProductos extends javax.swing.JPanel {
     }//GEN-LAST:event_txtStockMinimoActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        String codigo = txtCodigo.getText().trim();
+        
+        boolean editando = codigoEnEdicion != null;
+
+        String codigo = editando
+                ? codigoEnEdicion
+                : txtCodigo.getText().trim();
+
         String nombre = txtNombre.getText().trim();
         String textoPrecio = txtPrecio.getText().trim().replace(",", ".");
         String textoStock = txtStockActual.getText().trim();
         String textoMinimo = txtStockMinimo.getText().trim();
 
-        // 1. VALIDAR CAMPOS OBLIGATORIOS
+        // Campos obligatorios
         if (codigo.isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(
-                this, "Debe ingresar el código del producto.",
-                "Campo obligatorio",
-                javax.swing.JOptionPane.WARNING_MESSAGE
-            );
+            JOptionPane.showMessageDialog(this,
+                "Debe ingresar el código del producto.");
             txtCodigo.requestFocus();
             return;
         }
 
         if (nombre.isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(
-                this, "Debe ingresar el nombre del producto.",
-                "Campo obligatorio",
-                javax.swing.JOptionPane.WARNING_MESSAGE
-            );
+            JOptionPane.showMessageDialog(this,
+                "Debe ingresar el nombre del producto.");
             txtNombre.requestFocus();
             return;
         }
 
-        // 2. VALIDAR CÓDIGOS REPETIDOS
-        // Por ahora se consultan los productos de la tabla.
-        javax.swing.table.DefaultTableModel modelo =
-            (javax.swing.table.DefaultTableModel) tblProductos.getModel();
+        // Comprobar códigos repetidos solo al registrar
+        if (!editando) {
+            DefaultTableModel modelo =
+                (DefaultTableModel) tblProductos.getModel();
 
-        for (int i = 0; i < modelo.getRowCount(); i++) {
+            for (int i = 0; i < modelo.getRowCount(); i++) {
+                String existente =
+                    String.valueOf(modelo.getValueAt(i, 0));
 
-            String codigoExistente =
-                String.valueOf(modelo.getValueAt(i, 0));
-
-            if (codigoExistente.equalsIgnoreCase(codigo)) {
-                javax.swing.JOptionPane.showMessageDialog(
-                    this,
-                    "Ya existe un producto con el código " + codigo,
-                    "Código duplicado",
-                    javax.swing.JOptionPane.WARNING_MESSAGE
-                );
-                txtCodigo.requestFocus();
-                return;
+                if (existente.equalsIgnoreCase(codigo)) {
+                    JOptionPane.showMessageDialog(this,
+                        "Ya existe un producto con el código " + codigo);
+                    return;
+                }
             }
         }
 
-        // 3. VALIDAR PRECIO
+        // Validar los valores numéricos
         java.math.BigDecimal precio;
+        int stockActual;
+        int stockMinimo;
 
         try {
             precio = new java.math.BigDecimal(textoPrecio);
         } catch (NumberFormatException e) {
-            javax.swing.JOptionPane.showMessageDialog(
-                this,
-                "Ingrese un precio numérico válido.",
-                "Precio incorrecto",
-                javax.swing.JOptionPane.WARNING_MESSAGE
-            );
+            JOptionPane.showMessageDialog(this,
+                "Ingrese un precio numérico válido.");
             txtPrecio.requestFocus();
             return;
         }
 
-        // 4. VALIDAR STOCK ACTUAL
-        int stockActual;
-
         try {
             stockActual = Integer.parseInt(textoStock);
         } catch (NumberFormatException e) {
-            javax.swing.JOptionPane.showMessageDialog(
-                this,
-                "El stock actual debe ser un número entero.",
-                "Stock incorrecto",
-                javax.swing.JOptionPane.WARNING_MESSAGE
-            );
+            JOptionPane.showMessageDialog(this,
+                "El stock actual debe ser un número entero.");
             txtStockActual.requestFocus();
             return;
         }
 
-        // 5. VALIDAR STOCK MÍNIMO
-        int stockMinimo;
-
         try {
             stockMinimo = Integer.parseInt(textoMinimo);
         } catch (NumberFormatException e) {
-            javax.swing.JOptionPane.showMessageDialog(
-                this,
-                "El stock mínimo debe ser un número entero.",
-                "Stock incorrecto",
-                javax.swing.JOptionPane.WARNING_MESSAGE
-            );
+            JOptionPane.showMessageDialog(this,
+                "El stock mínimo debe ser un número entero.");
             txtStockMinimo.requestFocus();
             return;
         }
 
-        // 6. UTILIZAR LAS VALIDACIONES DEL MODELO PRODUCTO
+        // Registrar o actualizar en el CSV
         try {
-
-            cafestock.modelo.Producto producto =
-                new cafestock.modelo.Producto(
-                    codigo,
-                    nombre,
-                    precio,
-                    stockActual,
-                    stockMinimo
-                );
-
-            // 7. GUARDAR EN CSV Y LUEGO ACTUALIZAR LA TABLA
             if (controlador == null) {
-                JOptionPane.showMessageDialog(this, "El archivo de productos no está disponible.",
-                    "Error de almacenamiento", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            try {
-                controlador.registrar(producto);
-                actualizarTabla();
-            } catch (IOException e) {
                 JOptionPane.showMessageDialog(this,
-                    "No se pudo guardar el producto: " + e.getMessage(),
-                    "Error de almacenamiento", JOptionPane.ERROR_MESSAGE);
+                    "El archivo de productos no está disponible.");
                 return;
             }
 
-            // 8. MOSTRAR CONFIRMACIÓN
-            javax.swing.JOptionPane.showMessageDialog(
-                this,
-                "Producto registrado correctamente.",
-                "Registro exitoso",
-                javax.swing.JOptionPane.INFORMATION_MESSAGE
+            Producto producto = new Producto(
+                codigo, nombre, precio, stockActual, stockMinimo
             );
 
-            // 9. LIMPIAR LOS CAMPOS
+            if (editando) {
+                controlador.actualizar(producto);
+            } else {
+                controlador.registrar(producto);
+            }
+
+            // Recuperar los datos actualizados
+            actualizarTabla();
+
+            // Volver al modo de registro
+            codigoEnEdicion = null;
+            tblProductos.clearSelection();
+
             txtCodigo.setText("");
             txtNombre.setText("");
             txtPrecio.setText("");
             txtStockActual.setText("");
             txtStockMinimo.setText("");
 
-            txtCodigo.requestFocus();
+            txtCodigo.setEditable(true);
+            lblNuevoProducto.setText("Nuevo producto");
+            btnGuardar.setText("Guardar producto");
+            btnGuardar.setEnabled(true);
+
+            txtBuscar.setText("");
+            txtCodigo.requestFocusInWindow();
+
+            JOptionPane.showMessageDialog(this,
+                editando
+                    ? "Cambios guardados correctamente."
+                    : "Producto registrado correctamente.");
 
         } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this,
+                e.getMessage(), "Datos incorrectos",
+                JOptionPane.WARNING_MESSAGE);
 
-            // Se muestran los errores definidos:
-            // precio <= 0, más de dos decimales o stocks negativos.
-            javax.swing.JOptionPane.showMessageDialog(
-                this,
-                e.getMessage(),
-                "Datos incorrectos",
-                javax.swing.JOptionPane.WARNING_MESSAGE
-            );
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this,
+                "No se pudieron guardar los datos: " + e.getMessage(),
+                "Error de almacenamiento",
+                JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
@@ -673,7 +653,9 @@ public class PanelProductos extends javax.swing.JPanel {
         txtStockMinimo.setText("");
 
         tblProductos.clearSelection();
-
+        codigoEnEdicion = null;
+        lblNuevoProducto.setText("Nuevo producto");
+        btnGuardar.setText("Guardar producto");
         txtCodigo.setEditable(true);
         btnGuardar.setEnabled(true);
 

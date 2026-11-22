@@ -30,4 +30,42 @@ public class ProductoServicio {
         repositorio.escribirTodos(actualizados);
         productos.add(producto);
     }
+    
+    
+    public void actualizar(String codigo, String nombre,
+            java.math.BigDecimal precio, int stock, int stockMinimo)
+            throws IOException {
+
+        int indice = -1;
+
+        // Buscar el producto por su código.
+        for (int i = 0; i < productos.size(); i++) {
+            if (productos.get(i).getCodigo().equalsIgnoreCase(codigo)) {
+                indice = i;
+                break;
+            }
+        }
+
+        if (indice == -1) {
+            throw new IllegalArgumentException(
+                "No existe un producto con el código " + codigo
+            );
+        }
+
+        // Crear el producto actualizado conservando su código.
+        Producto actualizado = productos.get(indice).conCambios(
+            nombre, precio, stock, stockMinimo
+        );
+
+        // Preparar los cambios sin alterar todavía el inventario.
+        List<Producto> nuevaLista = new ArrayList<>(productos);
+        nuevaLista.set(indice, actualizado);
+
+        // Guardar primero en el archivo CSV.
+        repositorio.escribirTodos(nuevaLista);
+
+        // Actualizar la memoria solamente si se guardó correctamente.
+        productos.set(indice, actualizado);
+    }
+
 }
