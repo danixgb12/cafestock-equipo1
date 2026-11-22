@@ -1,20 +1,11 @@
 package cafestock;
 
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.SwingConstants;
+import cafestock.vista.VentanaPrincipal;
 import javax.swing.SwingUtilities;
 
-/** Punto de entrada provisional. Karen integrará la ventana principal. */
+/** Punto de entrada de la aplicación. */
 public class Main {
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame ventana = new JFrame("CaféStock - Equipo 1");
-            ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            ventana.add(new JLabel("CaféStock: proyecto MVC iniciado", SwingConstants.CENTER));
-            ventana.setSize(480, 240);
-            ventana.setLocationRelativeTo(null);
-            ventana.setVisible(true);
-        });
+        SwingUtilities.invokeLater(() -> new VentanaPrincipal().setVisible(true));
     }
 }

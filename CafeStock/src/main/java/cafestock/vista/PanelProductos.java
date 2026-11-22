@@ -4,17 +4,52 @@
  */
 package cafestock.vista;
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import cafestock.controlador.ProductoControlador;
+import cafestock.modelo.Producto;
+import cafestock.persistencia.ProductoRepositorioCsv;
+import cafestock.persistencia.RutaDatos;
+import cafestock.servicio.ProductoServicio;
+import java.io.IOException;
 /**
  *
  * @author ksang
  */
 public class PanelProductos extends javax.swing.JPanel {
 
+    private ProductoControlador controlador;
+
+    /** Recupera los productos existentes al construir la pantalla. */
+    private void iniciarInventario() {
+        try {
+            controlador = new ProductoControlador(
+                new ProductoServicio(new ProductoRepositorioCsv(RutaDatos.productos())));
+            actualizarTabla();
+        } catch (IOException ex) {
+            btnGuardar.setEnabled(false); // evitar registros temporales si falla el CSV
+            JOptionPane.showMessageDialog(this,
+                "No se pudo abrir productos.csv: " + ex.getMessage(),
+                "Error de almacenamiento", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void actualizarTabla() {
+        DefaultTableModel tabla = (DefaultTableModel) tblProductos.getModel();
+        tabla.setRowCount(0);
+        if (controlador == null) return;
+        for (Producto p : controlador.obtenerProductos()) {
+            tabla.addRow(new Object[]{p.getCodigo(), p.getNombre(), p.getPrecio(),
+                p.getStock(), p.getStockMinimo()});
+        }
+    }
+
+
     /**
      * Creates new form PanelProductos
      */
     public PanelProductos() {
         initComponents();
+        iniciarInventario();
         txtBuscar.getDocument().addDocumentListener(
         new javax.swing.event.DocumentListener() {
 
@@ -534,14 +569,21 @@ public class PanelProductos extends javax.swing.JPanel {
                     stockMinimo
                 );
 
-            // 7. AGREGAR EL PRODUCTO A LA TABLA TEMPORAL
-            modelo.addRow(new Object[]{
-                producto.getCodigo(),
-                producto.getNombre(),
-                producto.getPrecio(),
-                producto.getStock(),
-                producto.getStockMinimo()
-            });
+            // 7. GUARDAR EN CSV Y LUEGO ACTUALIZAR LA TABLA
+            if (controlador == null) {
+                JOptionPane.showMessageDialog(this, "El archivo de productos no está disponible.",
+                    "Error de almacenamiento", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            try {
+                controlador.registrar(producto);
+                actualizarTabla();
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this,
+                    "No se pudo guardar el producto: " + e.getMessage(),
+                    "Error de almacenamiento", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             // 8. MOSTRAR CONFIRMACIÓN
             javax.swing.JOptionPane.showMessageDialog(
