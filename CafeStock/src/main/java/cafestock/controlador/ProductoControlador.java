@@ -20,4 +20,16 @@ public class ProductoControlador {
     public void registrar(Producto producto) throws IOException {
         servicio.registrar(producto);
     }
+
+
+    public void actualizar(Producto producto) throws IOException {
+        servicio.actualizar(
+            producto.getCodigo(),
+            producto.getNombre(),
+            producto.getPrecio(),
+            producto.getStock(),
+            producto.getStockMinimo()
+        );
+    }
+
 }
