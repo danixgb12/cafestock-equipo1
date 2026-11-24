@@ -4,7 +4,6 @@ import cafestock.modelo.Producto;
 import cafestock.modelo.Venta;
 import cafestock.servicio.ProductoServicio;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,12 +23,10 @@ public class VentaControlador {
         return servicio.listar();
     }
 
-    /** Calcula precio × cantidad con dos decimales. Una cantidad no válida da 0.00 sin lanzar error. */
+    /** Pide el total a la clase Venta. Una cantidad no válida da 0.00 sin lanzar error. */
     public BigDecimal calcularTotal(Producto producto, int cantidad) {
         if (cantidad <= 0) return BigDecimal.ZERO.setScale(2);
-        return producto.getPrecio()
-            .multiply(BigDecimal.valueOf(cantidad))
-            .setScale(2, RoundingMode.HALF_UP);
+        return Venta.calcularTotal(producto.getPrecio(), cantidad);
     }
 
     /** Crea la venta. Si los datos no son válidos, Venta lanza IllegalArgumentException. */
