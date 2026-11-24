@@ -1,21 +1,18 @@
 package cafestock.vista;
 
+import cafestock.controlador.VentaControlador;
 import cafestock.modelo.Producto;
 import cafestock.modelo.Venta;
-import cafestock.persistencia.ProductoRepositorioCsv;
-import cafestock.persistencia.RutaDatos;
-import cafestock.servicio.ProductoServicio;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.io.IOException;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.Box;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -24,52 +21,60 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /**
- * Pantalla de la pestaña Ventas. Permite elegir un producto, ingresar la
- * cantidad y registrar la venta con una fecha que por defecto es la de hoy.
- * Por ahora las ventas solo viven en memoria: se pierden al cerrar la app.
+ * Pantalla de la pestaña Ventas. Muestra el formulario y el total antes de confirmar.
+ * La lógica de negocio está en VentaControlador.
  */
 public class PanelVentas extends JPanel {
     // Colores de la app (mismos de VentanaPrincipal).
     private static final Color FONDO = new Color(247, 243, 237);
     private static final Color VERDE = new Color(35, 70, 56);
-    // Color del borde suave de la tarjeta y del texto de las etiquetas.
     private static final Color BORDE_TARJETA = new Color(225, 219, 208);
     private static final Color TEXTO = new Color(45, 45, 45);
     // Fuentes del formulario.
     private static final Font FUENTE = new Font("Segoe UI", Font.PLAIN, 15);
     private static final Font FUENTE_ETIQUETA = new Font("Segoe UI", Font.BOLD, 14);
 
-    // Las ventas se guardan solo en memoria; el guardado en CSV llega con HU-A3-T5.
-    private final List<Venta> ventas = new ArrayList<>();
-    // Lista de productos del inventario. Guarda objetos Producto; su toString() muestra código, nombre y stock.
+    // El controlador hace los cálculos y guarda las ventas; la vista solo lo llama.
+    private final VentaControlador controlador;
     private final JComboBox<Producto> cmbProducto = new JComboBox<>();
     private final JTextField txtCantidad = new JTextField();
     // La fecha arranca con la de hoy, pero el usuario puede cambiarla.
     private final JTextField txtFecha = new JTextField(LocalDate.now().toString());
+    // Muestra el total calculado antes de confirmar la venta.
+    private final JLabel lblTotal = new JLabel("$0.00");
     // Muestra los mensajes de éxito o de error junto al botón.
     private final JLabel lblMensaje = new JLabel(" ");
 
     /**
-     * Construye la pantalla: carga los productos desde productos.csv,
-     * arma el formulario en una tarjeta y ubica el botón debajo de ella.
+     * Arma la pantalla, llena la lista de productos y conecta los cambios
+     * del formulario con el cálculo del total.
      */
-    public PanelVentas() {
-        // Carga los productos del inventario para elegir uno en la lista.
-        // Si el CSV no se puede leer, el combo queda vacío y se muestra el error.
-        try {
-            List<Producto> lista = new ProductoServicio(new ProductoRepositorioCsv(RutaDatos.productos())).listar();
-            for (Producto p : lista) cmbProducto.addItem(p);
-        } catch (IOException ex) {
-            lblMensaje.setText("No se pudo leer productos.csv: " + ex.getMessage());
-        }
+    public PanelVentas(VentaControlador controlador) {
+        this.controlador = controlador;
+
+        recargarProductos();
+
+        // Cada vez que se muestra la pestaña, el combo se vuelve a llenar con los productos actuales.
+        addComponentListener(new ComponentAdapter() {
+            @Override public void componentShown(ComponentEvent e) { recargarProductos(); }
+        });
+
+        // Cada cambio de producto o de cantidad recalcula el total en pantalla.
+        cmbProducto.addActionListener(e -> actualizarTotal());
+        txtCantidad.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { actualizarTotal(); }
+            @Override public void removeUpdate(DocumentEvent e) { actualizarTotal(); }
+            @Override public void changedUpdate(DocumentEvent e) { actualizarTotal(); }
+        });
 
         setLayout(new BorderLayout(10, 10));
         setBackground(FONDO);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Título, con el mismo estilo verde de la pestaña Productos.
         JLabel lblTitulo = new JLabel("Registrar venta");
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitulo.setForeground(VERDE);
@@ -81,20 +86,23 @@ public class PanelVentas extends JPanel {
             BorderFactory.createLineBorder(BORDE_TARJETA),
             BorderFactory.createEmptyBorder(24, 24, 24, 24)));
         // Tamaño fijo para que la tarjeta no se estire a todo el ancho de la ventana.
-        tarjeta.setPreferredSize(new Dimension(820, 260));
-        tarjeta.setMaximumSize(new Dimension(820, 260));
+        tarjeta.setPreferredSize(new Dimension(820, 330));
+        tarjeta.setMaximumSize(new Dimension(820, 330));
         tarjeta.setAlignmentX(LEFT_ALIGNMENT);
 
         JLabel lblProducto = new JLabel("Producto:");
         JLabel lblCantidad = new JLabel("Cantidad:");
         JLabel lblFecha = new JLabel("Fecha (aaaa-mm-dd):");
-        for (JLabel etiqueta : new JLabel[]{lblProducto, lblCantidad, lblFecha}) {
+        JLabel lblTotalTexto = new JLabel("Total (USD):");
+        for (JLabel etiqueta : new JLabel[]{lblProducto, lblCantidad, lblFecha, lblTotalTexto}) {
             etiqueta.setFont(FUENTE_ETIQUETA);
             etiqueta.setForeground(TEXTO);
         }
         cmbProducto.setFont(FUENTE);
         txtCantidad.setFont(FUENTE);
         txtFecha.setFont(FUENTE);
+        lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblTotal.setForeground(VERDE);
 
         // El orden de add() define la posición: etiqueta, campo, etiqueta, campo...
         tarjeta.add(lblProducto);
@@ -103,6 +111,8 @@ public class PanelVentas extends JPanel {
         tarjeta.add(txtCantidad);
         tarjeta.add(lblFecha);
         tarjeta.add(txtFecha);
+        tarjeta.add(lblTotalTexto);
+        tarjeta.add(lblTotal);
 
         // El botón llama a registrarVenta() cada vez que se presiona.
         JButton btnRegistrar = new JButton("Registrar venta");
@@ -134,19 +144,48 @@ public class PanelVentas extends JPanel {
         contenido.add(Box.createVerticalStrut(18));
         contenido.add(fila);
 
-        // Orden de la pantalla: título arriba y contenido debajo.
         add(lblTitulo, BorderLayout.NORTH);
         add(contenido, BorderLayout.CENTER);
+
+        // Calcula el total inicial con el primer producto de la lista.
+        actualizarTotal();
     }
 
     /**
-     * Valida los datos del formulario y, si son correctos, crea la venta.
-     * Las validaciones se hacen en este orden: producto, cantidad y fecha.
-     * Si alguna falla, muestra el mensaje y no registra nada.
-     * La cantidad 0 o negativa la rechaza la clase Venta, no esta vista.
+     * Vuelve a llenar el combo con los productos actuales, conservando el elegido
+     * si sigue existiendo. Así los productos nuevos aparecen sin reiniciar la app.
+     */
+    private void recargarProductos() {
+        Object seleccionado = cmbProducto.getSelectedItem();
+        cmbProducto.removeAllItems();
+        for (Producto p : controlador.obtenerProductos()) cmbProducto.addItem(p);
+        if (seleccionado != null) cmbProducto.setSelectedItem(seleccionado);
+        actualizarTotal();
+    }
+
+    /** Pide al controlador el total con los datos del formulario y lo muestra. */
+    private void actualizarTotal() {
+        Producto producto = (Producto) cmbProducto.getSelectedItem();
+        // Texto no numérico (letras o vacío): no se calcula total todavía.
+        int cantidad;
+        try {
+            cantidad = Integer.parseInt(txtCantidad.getText().trim());
+        } catch (NumberFormatException ex) {
+            lblTotal.setText("$0.00");
+            return;
+        }
+        if (producto == null) {
+            lblTotal.setText("$0.00");
+            return;
+        }
+        lblTotal.setText("$" + controlador.calcularTotal(producto, cantidad));
+    }
+
+    /**
+     * Revisa el formato de lo que escribe el usuario y pide al controlador registrar la venta.
+     * Si algo no es válido, muestra el mensaje y no registra nada.
      */
     private void registrarVenta() {
-        // Producto seleccionado en el combo. Puede ser null si la lista está vacía.
         Producto producto = (Producto) cmbProducto.getSelectedItem();
         if (producto == null) {
             lblMensaje.setText("Seleccione un producto.");
@@ -154,7 +193,6 @@ public class PanelVentas extends JPanel {
         }
 
         // La cantidad se lee como texto y se convierte a entero.
-        // Si no es un número (letras, vacío, decimales), parseInt lanza NumberFormatException.
         int cantidad;
         try {
             cantidad = Integer.parseInt(txtCantidad.getText().trim());
@@ -163,7 +201,7 @@ public class PanelVentas extends JPanel {
             return;
         }
 
-        // La fecha debe estar en formato aaaa-mm-dd (ISO). Otros formatos, como 24/11/2026, se rechazan.
+        // La fecha debe estar en formato aaaa-mm-dd (ISO).
         LocalDate fecha;
         try {
             fecha = LocalDate.parse(txtFecha.getText().trim());
@@ -173,15 +211,13 @@ public class PanelVentas extends JPanel {
         }
 
         try {
-            // El número temporal es el siguiente en la lista; T5 lo tomará del CSV.
-            Venta venta = new Venta(ventas.size() + 1, fecha, producto, cantidad);
-            ventas.add(venta);
-            lblMensaje.setText("Venta registrada: " + producto.getNombre() + " x" + cantidad);
+            Venta venta = controlador.registrar(producto, cantidad, fecha);
+            lblMensaje.setText("Venta registrada: " + producto.getNombre() + " x" + cantidad
+                + " — total $" + venta.getTotal());
             // Solo se limpia la cantidad. La fecha se conserva para registrar más ventas del mismo día.
             txtCantidad.setText("");
         } catch (IllegalArgumentException ex) {
-            // La clase Venta rechaza cantidades cero o negativas y mantiene la venta fuera de la lista.
-            // El mensaje viene de Venta, así que no hay que repetirlo aquí.
+            // La clase Venta rechaza cantidades cero o negativas; el mensaje viene de ella.
             lblMensaje.setText(ex.getMessage());
         }
     }
