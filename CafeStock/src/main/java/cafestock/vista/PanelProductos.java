@@ -21,18 +21,11 @@ public class PanelProductos extends javax.swing.JPanel {
     private String codigoEnEdicion = null;
     
     /** Recupera los productos existentes al construir la pantalla. */
-    private void iniciarInventario() {
-        try {
-            controlador = new ProductoControlador(
-                new ProductoServicio(new ProductoRepositorioCsv(RutaDatos.productos())));
-            actualizarTabla();
-        } catch (IOException ex) {
-            btnGuardar.setEnabled(false); // evitar registros temporales si falla el CSV
-            JOptionPane.showMessageDialog(this,
-                "No se pudo abrir productos.csv: " + ex.getMessage(),
-                "Error de almacenamiento", JOptionPane.ERROR_MESSAGE);
-        }
-    }
+    /** Usa el servicio compartido con la pestaña Ventas, así ambas ven los mismos productos. */
+private void iniciarInventario(ProductoServicio servicio) {
+    controlador = new ProductoControlador(servicio);
+    actualizarTabla();
+}
 
     private void actualizarTabla() {
         DefaultTableModel tabla = (DefaultTableModel) tblProductos.getModel();
@@ -45,12 +38,13 @@ public class PanelProductos extends javax.swing.JPanel {
     }
 
 
-    /**
+        /**
      * Creates new form PanelProductos
+     * @param servicio servicio de productos compartido con la pestaña Ventas
      */
-    public PanelProductos() {
+    public PanelProductos(ProductoServicio servicio) {
         initComponents();
-        iniciarInventario();
+        iniciarInventario(servicio);
         txtBuscar.getDocument().addDocumentListener(
         new javax.swing.event.DocumentListener() {
 

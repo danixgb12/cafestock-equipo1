@@ -18,17 +18,20 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     public VentanaPrincipal() {
             initComponents();
             tabPrincipal.removeAll();
-            tabPrincipal.addTab("Productos", new PanelProductos());
-            javax.swing.JPanel panelVentas = new javax.swing.JPanel();
-            panelVentas.add(new javax.swing.JLabel("Módulo de ventas en desarrollo"));
-            tabPrincipal.addTab("Ventas", panelVentas);
+
+            // Un solo servicio de productos para las dos pestañas, así los cambios se ven en tiempo real.
+            cafestock.servicio.ProductoServicio servicio = crearServicio();
+            if (servicio != null) {
+                tabPrincipal.addTab("Productos", new PanelProductos(servicio));
+                tabPrincipal.addTab("Ventas", new PanelVentas(
+                    new cafestock.controlador.VentaControlador(servicio)));
+            }
+
             setLocationRelativeTo(null);
             setTitle("CaféStock | Gestión de Inventario y Ventas");
             setExtendedState(javax.swing.JFrame.MAXIMIZED_BOTH);
             setLocationRelativeTo(null);
             
-            getContentPane().removeAll();
-
             getContentPane().removeAll();
 
             getContentPane().setLayout(
@@ -42,6 +45,21 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
             getContentPane().revalidate();
             getContentPane().repaint();                            
+    }
+
+    /**
+     * Crea el servicio de productos leyendo productos.csv.
+     * Si el archivo no se puede abrir, muestra el error y devuelve null.
+     */
+    private cafestock.servicio.ProductoServicio crearServicio() {
+        try {
+            return new cafestock.servicio.ProductoServicio(
+                new cafestock.persistencia.ProductoRepositorioCsv(cafestock.persistencia.RutaDatos.productos()));
+        } catch (java.io.IOException ex) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "No se pudo abrir productos.csv: " + ex.getMessage());
+            return null;
+        }
     }
 
     /**
