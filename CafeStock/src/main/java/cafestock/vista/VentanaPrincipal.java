@@ -19,9 +19,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             initComponents();
             tabPrincipal.removeAll();
             tabPrincipal.addTab("Productos", new PanelProductos());
-            javax.swing.JPanel panelVentas = new javax.swing.JPanel();
-            panelVentas.add(new javax.swing.JLabel("Módulo de ventas en desarrollo"));
-            tabPrincipal.addTab("Ventas", panelVentas);
+            tabPrincipal.addTab("Ventas", new PanelVentas());;
             setLocationRelativeTo(null);
             setTitle("CaféStock | Gestión de Inventario y Ventas");
             setExtendedState(javax.swing.JFrame.MAXIMIZED_BOTH);
