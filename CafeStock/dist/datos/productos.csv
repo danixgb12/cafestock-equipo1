@@ -1,0 +1,8 @@
+codigo,nombre,precio,stock,stockMinimo
+P001,Cafe Americano,1.50,12,3
+P002,Empanada,1.25,8,5
+P100,Batido de Plátano,1.50,0,1
+P003,Sanduche de Pollo,1.50,15,5
+P004,Sanduche de Jamon y Queso,1.25,3,3
+TEST01,Café de Prueba,1.50,7,3
+P005,Jugo de Naranja,0.75,12,4
