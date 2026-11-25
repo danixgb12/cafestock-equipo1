@@ -1,0 +1,5 @@
+numero,fecha,codigoProducto,nombreProducto,precioUnitario,cantidad,total
+1,2026-11-24,P001,Cafe Americano,1.50,3,4.50
+2,2026-11-24,P004,Sanduche de Jamon y Queso,1.25,7,8.75
+3,2026-11-24,TEST01,Café de Prueba,1.50,3,4.50
+4,2026-11-25,P005,Jugo de Naranja,0.75,3,2.25
