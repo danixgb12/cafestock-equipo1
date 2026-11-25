@@ -1,6 +1,7 @@
 package cafestock.modelo;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -24,7 +25,13 @@ public final class Venta {
         this.numero = numero;
         this.cantidad = cantidad;
         // El total se calcula una sola vez al crear la venta, así no cambia si el precio del producto cambia después.
-        this.total = producto.getPrecio().multiply(BigDecimal.valueOf(cantidad));
+        this.total = calcularTotal(producto.getPrecio(), cantidad);
+    }
+
+    /** Regla de negocio: precio × cantidad, redondeado a dos decimales en USD. */
+    public static BigDecimal calcularTotal(BigDecimal precio, int cantidad) {
+        return precio.multiply(BigDecimal.valueOf(cantidad))
+            .setScale(2, RoundingMode.HALF_UP);
     }
 
     public int getNumero() { return numero; }
@@ -32,6 +39,4 @@ public final class Venta {
     public Producto getProducto() { return producto; }
     public int getCantidad() { return cantidad; }
     public BigDecimal getTotal() { return total; }
-
-   
 }
