@@ -60,6 +60,11 @@ public class VentanaPrincipal extends javax.swing.JFrame {
      */
     private cafestock.servicio.ProductoServicio crearServicio() {
         try {
+            cafestock.persistencia.TransaccionVentasCsv.recuperarPendiente(
+            cafestock.persistencia.RutaDatos.productos(),
+            cafestock.persistencia.RutaDatos.ventas()
+        );
+            
             return new cafestock.servicio.ProductoServicio(
                 new cafestock.persistencia.ProductoRepositorioCsv(cafestock.persistencia.RutaDatos.productos()));
         } catch (java.io.IOException ex) {

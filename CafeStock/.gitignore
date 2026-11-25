@@ -7,3 +7,8 @@
 *.escribiendo
 *.nuevo
 transaccion.pendiente
+
+# Copias y marca temporales de transacciones de ventas
+/datos/.venta-pendiente
+/datos/.productos-antes-venta.bak
+/datos/.ventas-antes-venta.bak

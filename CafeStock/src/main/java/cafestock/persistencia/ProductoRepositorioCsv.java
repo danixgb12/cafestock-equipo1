@@ -20,6 +20,10 @@ public class ProductoRepositorioCsv {
         this.archivo = archivo.toAbsolutePath().normalize();
     }
 
+    public Path rutaArchivo() {
+        return archivo;
+    }
+
     public List<Producto> leerTodos() throws IOException {
         if (Files.notExists(archivo)) {
             escribirTodos(List.of()); // crea encabezado la primera vez

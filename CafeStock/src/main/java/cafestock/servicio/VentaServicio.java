@@ -18,6 +18,17 @@ public class VentaServicio {
         this.ventas = new ArrayList<>(repositorio.leerTodos());
     }
 
+    public java.nio.file.Path rutaArchivo() {
+        return repositorio.rutaArchivo();
+    }
+
+    /** Recarga el estado confirmado desde el archivo después de una recuperación. */
+    public void recargar() throws IOException {
+        List<Venta> actuales = repositorio.leerTodos();
+        ventas.clear();
+        ventas.addAll(actuales);
+    }
+
     public List<Venta> listar() {
         return List.copyOf(ventas);
     }
