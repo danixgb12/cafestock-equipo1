@@ -4,6 +4,7 @@ import cafestock.modelo.Producto;
 import cafestock.modelo.Venta;
 import cafestock.servicio.ProductoServicio;
 import cafestock.servicio.VentaServicio;
+import cafestock.persistencia.TransaccionVentasCsv;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -32,8 +33,8 @@ public class VentaControlador {
     }
 
     /**
-     * HU-A3-T5: registra la venta en CSV y utiliza el stock vigente, no el del combo.
-     * HU-A3-T6 deberá reforzar la coordinación de las dos escrituras CSV.
+     * HU-A3-T6: una venta confirma dos CSV o restaura ambos.
+     * La consulta del producto vigente evita validar stock desactualizado.
      */
     public synchronized Venta registrar(Producto seleccionado, int cantidad, LocalDate fecha) throws IOException {
         if (seleccionado == null) throw new IllegalArgumentException("Seleccione un producto.");
@@ -45,20 +46,24 @@ public class VentaControlador {
             throw new IllegalArgumentException("Stock insuficiente. Disponible: " + vigente.getStock() + ".");
         }
         Venta venta = ventas.crear(vigente, cantidad, fecha);
-        productos.actualizar(vigente.getCodigo(), vigente.getNombre(), vigente.getPrecio(),
-            vigente.getStock() - cantidad, vigente.getStockMinimo());
+        TransaccionVentasCsv transaccion = new TransaccionVentasCsv(
+            productos.rutaArchivo(), ventas.rutaArchivo());
+        transaccion.iniciar();
         try {
+            productos.actualizar(vigente.getCodigo(), vigente.getNombre(), vigente.getPrecio(),
+                vigente.getStock() - cantidad, vigente.getStockMinimo());
             ventas.guardar(venta);
-        } catch (IOException | RuntimeException ex) {
-            // Recuperación básica; T6 debe hacer la coordinación resistente a fallos.
+            transaccion.confirmar();
+            return venta;
+        } catch (IOException | RuntimeException fallo) {
             try {
-                productos.actualizar(vigente.getCodigo(), vigente.getNombre(), vigente.getPrecio(),
-                    vigente.getStock(), vigente.getStockMinimo());
-            } catch (IOException | RuntimeException rollback) {
-                ex.addSuppressed(rollback);
+                transaccion.revertir();
+                productos.recargar();
+                ventas.recargar();
+            } catch (IOException | RuntimeException recuperacion) {
+                fallo.addSuppressed(recuperacion);
             }
-            throw ex;
+            throw fallo;
         }
-        return venta;
     }
 }

@@ -25,6 +25,10 @@ public class VentaRepositorioCsv {
         this.archivo = archivo.toAbsolutePath().normalize();
     }
 
+    public Path rutaArchivo() {
+        return archivo;
+    }
+
     public List<Venta> leerTodos() throws IOException {
         if (Files.notExists(archivo)) escribirTodos(List.of());
         List<String> lineas = Files.readAllLines(archivo, StandardCharsets.UTF_8);

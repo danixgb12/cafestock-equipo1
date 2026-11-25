@@ -16,6 +16,17 @@ public class ProductoServicio {
         this.productos = new ArrayList<>(repositorio.leerTodos());
     }
 
+    public java.nio.file.Path rutaArchivo() {
+        return repositorio.rutaArchivo();
+    }
+
+    /** Recarga el estado confirmado desde el archivo después de una recuperación. */
+    public void recargar() throws IOException {
+        List<Producto> actuales = repositorio.leerTodos();
+        productos.clear();
+        productos.addAll(actuales);
+    }
+
     public List<Producto> listar() {
         return List.copyOf(productos);
     }
