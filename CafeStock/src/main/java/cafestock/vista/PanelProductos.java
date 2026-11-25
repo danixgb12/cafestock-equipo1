@@ -45,6 +45,12 @@ private void iniciarInventario(ProductoServicio servicio) {
     public PanelProductos(ProductoServicio servicio) {
         initComponents();
         iniciarInventario(servicio);
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentShown(java.awt.event.ComponentEvent e) {
+                actualizarTabla();
+            }
+        });
         txtBuscar.getDocument().addDocumentListener(
         new javax.swing.event.DocumentListener() {
 
