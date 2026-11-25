@@ -11,6 +11,7 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import javax.swing.Box;
@@ -216,9 +217,13 @@ public class PanelVentas extends JPanel {
                 + " — total $" + venta.getTotal());
             // Solo se limpia la cantidad. La fecha se conserva para registrar más ventas del mismo día.
             txtCantidad.setText("");
+            // Vuelve a cargar los productos para que el combo muestre el stock descontado.
+            recargarProductos();
         } catch (IllegalArgumentException ex) {
-            // La clase Venta rechaza cantidades cero o negativas; el mensaje viene de ella.
+            // La clase Venta y el controlador rechazan cantidades inválidas o stock insuficiente; el mensaje viene de ellos.
             lblMensaje.setText(ex.getMessage());
+        } catch (IOException ex) {
+            lblMensaje.setText("No se pudo guardar el stock: " + ex.getMessage());
         }
     }
 }
