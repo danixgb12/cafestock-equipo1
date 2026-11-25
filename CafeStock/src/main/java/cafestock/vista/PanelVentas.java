@@ -223,7 +223,7 @@ public class PanelVentas extends JPanel {
             // La clase Venta y el controlador rechazan cantidades inválidas o stock insuficiente; el mensaje viene de ellos.
             lblMensaje.setText(ex.getMessage());
         } catch (IOException ex) {
-            lblMensaje.setText("No se pudo guardar el stock: " + ex.getMessage());
+            lblMensaje.setText("No se pudo guardar la venta: " + ex.getMessage());
         }
     }
 }

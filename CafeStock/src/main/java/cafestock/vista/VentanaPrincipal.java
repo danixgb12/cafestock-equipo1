@@ -23,8 +23,15 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             cafestock.servicio.ProductoServicio servicio = crearServicio();
             if (servicio != null) {
                 tabPrincipal.addTab("Productos", new PanelProductos(servicio));
-                tabPrincipal.addTab("Ventas", new PanelVentas(
-                    new cafestock.controlador.VentaControlador(servicio)));
+                try {
+                    cafestock.servicio.VentaServicio ventas = new cafestock.servicio.VentaServicio(
+                        new cafestock.persistencia.VentaRepositorioCsv(cafestock.persistencia.RutaDatos.ventas()));
+                    tabPrincipal.addTab("Ventas", new PanelVentas(
+                        new cafestock.controlador.VentaControlador(servicio, ventas)));
+                } catch (java.io.IOException ex) {
+                    javax.swing.JOptionPane.showMessageDialog(this,
+                        "No se pudo abrir ventas.csv: " + ex.getMessage());
+                }
             }
 
             setLocationRelativeTo(null);
