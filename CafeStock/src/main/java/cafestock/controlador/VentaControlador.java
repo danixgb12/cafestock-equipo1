@@ -3,46 +3,62 @@ package cafestock.controlador;
 import cafestock.modelo.Producto;
 import cafestock.modelo.Venta;
 import cafestock.servicio.ProductoServicio;
+import cafestock.servicio.VentaServicio;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 public class VentaControlador {
-    private final ProductoServicio servicio;
-    private final List<Venta> ventas = new ArrayList<>();
+    private final ProductoServicio productos;
+    private final VentaServicio ventas;
 
-    public VentaControlador(ProductoServicio servicio) {
-        this.servicio = servicio;
+    public VentaControlador(ProductoServicio productos, VentaServicio ventas) {
+        this.productos = productos;
+        this.ventas = ventas;
     }
 
     public List<Producto> obtenerProductos() {
-        return servicio.listar();
+        return productos.listar();
+    }
+
+    public List<Venta> obtenerVentas() {
+        return ventas.listar();
     }
 
     public BigDecimal calcularTotal(Producto producto, int cantidad) {
-        if (cantidad <= 0)
-            return BigDecimal.ZERO.setScale(2);
+        if (producto == null || cantidad <= 0) return BigDecimal.ZERO.setScale(2);
         return Venta.calcularTotal(producto.getPrecio(), cantidad);
     }
 
     /**
-     * Valida cantidad y stock, descuenta el stock y guarda el producto
-     * antes de registrar la venta en memoria.
+     * HU-A3-T5: registra la venta en CSV y utiliza el stock vigente, no el del combo.
+     * HU-A3-T6 deberá reforzar la coordinación de las dos escrituras CSV.
      */
-    public Venta registrar(Producto producto, int cantidad, LocalDate fecha) throws IOException {
-        if (cantidad <= 0)
-            throw new IllegalArgumentException("La cantidad debe ser mayor que cero.");
-        if (cantidad > producto.getStock())
-            throw new IllegalArgumentException(
-                "Stock insuficiente. Disponible: " + producto.getStock() + ".");
-
-        Venta venta = new Venta(ventas.size() + 1, fecha, producto, cantidad);
-        Producto actualizado = producto.conStock(producto.getStock() - cantidad);
-        servicio.actualizar(actualizado.getCodigo(), actualizado.getNombre(),
-    actualizado.getPrecio(), actualizado.getStock(), actualizado.getStockMinimo());
-        ventas.add(venta);
+    public synchronized Venta registrar(Producto seleccionado, int cantidad, LocalDate fecha) throws IOException {
+        if (seleccionado == null) throw new IllegalArgumentException("Seleccione un producto.");
+        if (cantidad <= 0) throw new IllegalArgumentException("La cantidad debe ser mayor que cero.");
+        Producto vigente = productos.listar().stream()
+            .filter(p -> p.getCodigo().equalsIgnoreCase(seleccionado.getCodigo()))
+            .findFirst().orElseThrow(() -> new IllegalArgumentException("El producto ya no existe."));
+        if (cantidad > vigente.getStock()) {
+            throw new IllegalArgumentException("Stock insuficiente. Disponible: " + vigente.getStock() + ".");
+        }
+        Venta venta = ventas.crear(vigente, cantidad, fecha);
+        productos.actualizar(vigente.getCodigo(), vigente.getNombre(), vigente.getPrecio(),
+            vigente.getStock() - cantidad, vigente.getStockMinimo());
+        try {
+            ventas.guardar(venta);
+        } catch (IOException | RuntimeException ex) {
+            // Recuperación básica; T6 debe hacer la coordinación resistente a fallos.
+            try {
+                productos.actualizar(vigente.getCodigo(), vigente.getNombre(), vigente.getPrecio(),
+                    vigente.getStock(), vigente.getStockMinimo());
+            } catch (IOException | RuntimeException rollback) {
+                ex.addSuppressed(rollback);
+            }
+            throw ex;
+        }
         return venta;
     }
 }
